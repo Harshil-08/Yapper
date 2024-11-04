@@ -12,7 +12,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3000/signup', { username, email, password });
+      await axios.post('/api/auth/signup', { username, email, password });
       navigate('/login');
     } catch (err) {
       if (err.response?.status === 400) {

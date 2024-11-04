@@ -1,14 +1,17 @@
 import React from 'react'
+import Header from './Header'
+import Sidebar from './Sidebar'
+import MembersList from './MembersList'
 
 const AppLayout = ()=> WrappedComponent => {
 	return(props)=>{
 		return(
 			<>
-				<div className=''>Header</div>
-				<div className='fexl'>
-					<div className=''>sidebar</div>
+				<Header/>
+				<div className='flex'>
+					<Sidebar/>
 					<WrappedComponent {...props}/>
-					<div className=''>members</div>
+					<MembersList/>
 				</div>
 			</>
 		)
