@@ -22,18 +22,18 @@ const UserSchema = new mongoose.Schema(
 			required: true,
 		},
 		avatar: {
-			public_id:{
-      	type: String,
-				required: true,
+			public_id: {
+				type: String,
+				default: "default-avatar-id",
 			},
 			url: {
 				type: String,
-				required: true,
-			}
+				default: "https://via.placeholder.com/100",
+			},
 		},
 		accessToken: {
 			type: String,
-		},
+	},
 	},
 	{
 		timestamps: true,
