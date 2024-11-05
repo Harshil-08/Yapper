@@ -9,14 +9,14 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen w-64 border-r-2 border-teal-300 bg-white text-teal-900">
+    <div className="flex flex-col h-full w-64 border-r-2 border-teal-300 bg-white text-teal-900">
       {/* Chat List with Scroll */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-2">
         <span className="font-semibold text-teal-700 text-lg mb-4 block">Chats</span>
         {chats.map((chat) => (
           <div
             key={chat.id}
-            className="flex items-center justify-between p-3 mb-2 rounded-lg cursor-pointer hover:bg-teal-100"
+            className="flex items-center justify-between p-2 mb-2 rounded-lg cursor-pointer hover:bg-teal-100"
           >
             <div className="flex items-center">
               <img

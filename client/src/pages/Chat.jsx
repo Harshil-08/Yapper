@@ -3,7 +3,7 @@ import AppLayout from '../components/layout/AppLayout'
 
 const Chat = () => {
   return (
-    <div className=''>Chat</div>
+    <div>Chat</div>
   )
 }
 
