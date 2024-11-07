@@ -8,7 +8,7 @@ const AppLayout = ()=> WrappedComponent => {
 		return(
 			<>
 				<Header/>
-				<div className='flex h-screen flex-1'>
+				<div className='flex h-screen'>
 					<Sidebar/>
 					<WrappedComponent {...props}/>
 					<MembersList/>
