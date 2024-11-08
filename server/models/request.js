@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 
-const RequestSchema = new Schema(
+const RequestSchema = new mongoose.Schema(
 	{
 		status:{
 			type: String,

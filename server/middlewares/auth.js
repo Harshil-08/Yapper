@@ -25,7 +25,7 @@ export const auth = async (req, res, next) => {
 			});
 		}
 
-		req.user = user;
+		req.user = currentUser;
 		next();
 	});
 };
