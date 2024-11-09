@@ -20,6 +20,16 @@ const ChatSchema = new mongoose.Schema(
 				ref:"User",
 			}
 		],
+		avatar: {
+			public_id: {
+				type: String,
+				default: "default-avatar-id",
+			},
+			url: {
+				type: String,
+				default: "https://via.placeholder.com/100",
+			},
+		},
 		joinLink: {
 			type: String,
 			unique: true,

@@ -22,7 +22,7 @@ app.use(
 app.use(cookieParser());
 
 app.use('/api/auth',authRouter);
-app.use('/api/chat',auth,chatRouter);
+app.use('/api/chats',auth,chatRouter);
 
 app.listen(PORT, () => {
 	try {
