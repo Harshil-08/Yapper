@@ -1,3 +1,4 @@
+import User from "../models/user.js";
 import Chat from "../models/chat.js";
 import { nanoid } from "nanoid";
 
@@ -97,5 +98,39 @@ export const getChatMembers = async (req, res) => {
 		});
 	} catch (error) {
 		res.status(500).json({ message: "Failed to retrieve chat members", error: error.message });
+	}
+};
+
+export const addMembers = async(req,res)=>{
+	const {chatId, members} = req.body;
+
+	try{
+		const chat = await Chat.findById(chatId);
+		if (!chat) {
+			return res.status(400).json({ message: "Chat not found" });
+		}
+		
+		if (!chat.groupChat) {
+			return res.status(400).json({ message: "This is not a group chat" });
+		}
+
+		if (chat.admin.toString() !== req.user._id.toString()) {
+			return res.status(403).json({ message: "Only the admin can add members" });
+		}
+
+		const allNewMembers = await Promise.all(
+			members.map((i)=> User.findById(i))
+		);
+		
+		chat.members.push(...allNewMembers.map((i)=> i._id));
+
+		await chat.save();
+
+		res.status(200).json({
+			success: true,
+			message: "Members added successfully",
+		});
+	} catch{
+		res.status(500).json({message: "Failed to add members", error: error.message});
 	}
 };
