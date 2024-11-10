@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 
-const Chat = () => {
+const Chat = ( {chatID} ) => {
   const [message, setMessage] = useState('');
   const chatName = "General Chat";
 
