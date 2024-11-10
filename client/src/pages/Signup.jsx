@@ -1,32 +1,33 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const navigate = useNavigate();
+	const [username, setUsername] = useState('');
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
+	const [message, setMessage] = useState('');
+	const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post('/api/auth/signup', { username, email, password });
-      navigate('/login');
-    } catch (err) {
-      if (err.response?.status === 400) {
-        setMessage({ type: 'error', text: err.response?.data?.message || 'Signup failed' });
-      } else {
-        setMessage({ type: 'error', text: 'Signup failed. Please try again later.' });
-      }
-    }
-  };
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		try {
+			await axios.post('/api/auth/signup', { username, email, password });
+			setMessage({ type: 'success', text: 'Signup successful!' });
+			setTimeout(() => navigate('/login'), 2000);
+		} catch (err) {
+			if (err.response?.status === 403) {
+				setMessage({ type: 'error', text: err.response?.data?.message || 'Signup failed' });
+			} else {
+				setMessage({ type: 'error', text: 'Signup failed. Please try again later.' });
+			}
+		}
+	};
 
-  return (
-		<div className='flex items-center justify-center min-h-screen bg-gray-100'>
+	return (
+		<div className='flex items-center justify-center min-h-screen bg-teal-100'>
 			<div className='bg-white p-8 rounded-lg shadow-lg w-full max-w-sm'>
-				<h2 className='text-2xl font-bold mb-6 text-center'>Signup</h2>
+				<h2 className='text-2xl font-bold mb-6 text-center text-teal-600'>Signup</h2>
 				<form className='flex flex-col space-y-4' onSubmit={handleSubmit}>
 					<input
 						type="text"
@@ -34,7 +35,7 @@ const Signup = () => {
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
 						required
-						className='p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='p-2 border border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500'
 					/>
 					<input 
 						type="email"
@@ -42,7 +43,7 @@ const Signup = () => {
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 						required
-						className='p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='p-2 border border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500'
 					/>
 					<input
 						type="password"
@@ -50,11 +51,11 @@ const Signup = () => {
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						required
-						className='p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+						className='p-2 border border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500'
 					/>
 					<button
 						type="submit"
-						className='bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300'
+						className='bg-teal-600 text-white p-2 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-300'
 					>
 						Signup
 					</button>
@@ -65,12 +66,12 @@ const Signup = () => {
 					</div>
 				)}
 				<div className='mt-4 text-center'>
-					<p className='text-gray-600'>Already have an account?</p>
-					<a href='/login' className='text-blue-500 hover:underline'>Login</a>
+					<p className='text-teal-700'>Already have an account?</p>
+					<a href='/login' className='text-teal-500 hover:underline'>Login</a>
 				</div>
 			</div>
 		</div>
-  );
+	);
 };
 
 export default Signup;
