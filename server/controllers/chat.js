@@ -43,8 +43,8 @@ export const getMyChat = async (req, res) => {
 				name = chat.name;
 			} else {
 				const otherMember = chat.members.find(member => member._id.toString() !== req.user._id.toString());
-				avatar = otherMember?.avatar || { url: "https://via.placeholder.com/100" };
-				name = otherMember?.name || "Unknown User";
+				avatar = otherMember?.avatar;
+				name = otherMember?.name;
 			}
 
 			return {
@@ -72,8 +72,16 @@ export const getChatMembers = async (req, res) => {
 
 	try {
 		const chat = await Chat.findById(chatId)
-			.populate("members", "name avatar")
-			.populate("admin", "name avatar");
+			.populate({
+				path: "members", 
+				select: "username avatar", 
+				model: "User" 
+			})
+			.populate({
+				path: "admin", 
+				select: "username avatar", 
+				model: "User"  
+			});
 
 		if (!chat) {
 			return res.status(404).json({ message: "Chat not found" });
@@ -81,15 +89,17 @@ export const getChatMembers = async (req, res) => {
 
 		const members = chat.members.map(member => ({
 			_id: member._id,
-			name: member.name,
-			avatar: member.avatar,
+			username: member.username,  
+			avatar: member.avatar.url, 
 		}));
 
-		const admin = {
-			_id: chat.admin._id,
-			name: chat.admin.name,
-			avatar: chat.admin.avatar,
-		};
+		const admin = chat.admin
+			? {
+				_id: chat.admin._id,
+				username: chat.admin.username,  
+				avatar: chat.admin.avatar.url, 
+			}
+			: null;
 
 		res.status(200).json({
 			success: true,
@@ -106,10 +116,14 @@ export const addMembers = async(req,res)=>{
 
 	try{
 		const chat = await Chat.findById(chatId);
+		if(!members || members.length < 1){
+			return res.status(400).json({message: "Please provide members"});
+		}
+
 		if (!chat) {
 			return res.status(400).json({ message: "Chat not found" });
 		}
-		
+
 		if (!chat.groupChat) {
 			return res.status(400).json({ message: "This is not a group chat" });
 		}
@@ -119,10 +133,14 @@ export const addMembers = async(req,res)=>{
 		}
 
 		const allNewMembers = await Promise.all(
-			members.map((i)=> User.findById(i))
+			members.map((i)=> User.findById(i, "name"))
 		);
-		
-		chat.members.push(...allNewMembers.map((i)=> i._id));
+
+		const uniqueMembers = allNewMembers
+		.filter((i)=>!chat.members.includes(i._id.toString()))
+		.map((i)=>i._id)
+
+		chat.members.push(...uniqueMembers.map((i)=> i._id));
 
 		await chat.save();
 
@@ -134,3 +152,43 @@ export const addMembers = async(req,res)=>{
 		res.status(500).json({message: "Failed to add members", error: error.message});
 	}
 };
+
+export const removeMembers = async(req,res)=>{
+	const { userId, chatId } = req.body;
+
+	try{	
+		const [chat, user] = await Promise.all([
+			Chat.findById(chatId),
+			User.findById(userId, "name")
+		]);
+
+		if(!chat){
+			return res.status(400).json({ message: "Chat not found" })
+		}
+		if(!user){
+			return res.status(400).json({ message: "User not found" })
+		}
+		if (!chat.groupChat) {
+			return res.status(400).json({ message: "This is not a group chat" });
+		}
+		if (chat.admin.toString() !== req.user._id.toString()) {
+			return res.status(403).json({ message: "Only the admin can remove members" });
+		}
+		if(chat.members.length<=3){
+			return res.status(400).json({message: "Group must have atleast 3 members" })
+		}
+
+		chat.members = chat.members.filter(
+			(members)=> members.toString() !== userId.toString()
+		);
+
+		await chat.save();
+
+		res.status(200).json({
+			success: true,
+			message: "Members removed successfully",
+		});
+	}catch{
+		res.status(500).json({message: "Failed to remove members", error: error.message});
+	}
+}
