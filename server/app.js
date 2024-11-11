@@ -6,6 +6,7 @@ import 'dotenv/config';
 import authRouter from "./routes/auth.js";
 import chatRouter from "./routes/chat.js"
 import { auth } from "./middlewares/auth.js"
+import path from "path";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,13 @@ app.use(cookieParser());
 
 app.use('/api/auth',authRouter);
 app.use('/api/chats',auth,chatRouter);
+
+
+const __dirname = path.resolve();
+app.use(express.static(path.join(__dirname, "/client/dist")));
+app.use("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
+});
 
 app.listen(PORT, () => {
 	try {
