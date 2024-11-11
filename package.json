@@ -1,14 +1,33 @@
 {
-	"name": "yapper",
-	"version": "1.0.0",
-	"main": "app.js",
-	"scripts": {
-		"start": "node server/app.js",
-		"dev": "nodemon server/app.js",
+  "name": "server",
+  "version": "1.0.0",
+  "main": "server/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/app.js",
+    "dev": "nodemon app.js",
 		"build": "npm install && npm install --prefix client && npm run build --prefix client"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"description": ""
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.0",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^5.0.8",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.0.2",
+    "validator": "^13.12.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.1.0",
+    "nodemon": "^3.1.7"
+  }
 }
