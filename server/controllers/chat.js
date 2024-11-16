@@ -192,3 +192,34 @@ export const removeMembers = async(req,res)=>{
 		res.status(500).json({message: "Failed to remove members", error: error.message});
 	}
 }
+
+export const leaveGroup = async(req,res)=>{
+	const { chatId } = req.params;
+
+	try{	
+		const chat = await Chat.findById(chatId);
+		if(!chat){
+			return res.status(400).json({ message: "Chat not found" })
+		}
+		if (!chat.groupChat) {
+			return res.status(400).json({ message: "This is not a group chat" });
+		}
+    
+		if(chat.admin.toString()=== req.user.toString()){
+			return res.status(400).json({ message: "Admin cannot leave the group"})
+		}
+
+		chat.members = chat.members.filter(
+			(members)=> members.toString() !== req.user.toString()
+		);
+
+		await chat.save();
+
+		res.status(200).json({
+			success: true,
+			message: "Member leave successfully",
+		});
+	}catch{
+		res.status(500).json({message: "Failed to leave group", error: error.message});
+	}
+}
