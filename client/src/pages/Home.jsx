@@ -13,4 +13,4 @@ const Home = () => {
   );
 };
 
-export default AppLayout()(Home);
+export default AppLayout(Home);

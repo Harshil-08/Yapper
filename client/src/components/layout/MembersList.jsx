@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const MembersList = ({ chatId }) => {
   const [admin, setAdmin] = useState(null);
@@ -24,12 +24,12 @@ const MembersList = ({ chatId }) => {
   }, [chatId]);
 
   if (loading) {
-    return <div>Loading members...</div>;
+    return <div className="p-4">Loading members...</div>;
   }
 
   return (
-    <div className="w-64 bg-white border-l-2 border-teal-300 h-full p-2 overflow-y-auto">
-      <h2 className="text-xl font-semibold text-teal-700 mb-4">Members</h2>
+    <div className="w-64 h-full bg-white border-l border-teal-300 p-4 overflow-y-auto">
+      <h2 className="text-lg font-semibold text-teal-700 mb-4">Members</h2>
       {admin && (
         <div className="flex items-center p-2 rounded-lg bg-teal-100 mb-2">
           <img
@@ -37,9 +37,7 @@ const MembersList = ({ chatId }) => {
             alt={`${admin.username} profile`}
             className="w-10 h-10 rounded-full mr-3"
           />
-          <div className="flex-1">
-            <p className="font-semibold">{admin.username} (Admin)</p>
-          </div>
+          <p className="font-semibold">{admin.username} (Admin)</p>
         </div>
       )}
       {members.map((member) => (
@@ -52,9 +50,7 @@ const MembersList = ({ chatId }) => {
             alt={`${member.username} profile`}
             className="w-10 h-10 rounded-full mr-3"
           />
-          <div className="flex-1">
-            <p className="font-semibold">{member.username}</p>
-          </div>
+          <p className="font-semibold">{member.username}</p>
         </div>
       ))}
     </div>
