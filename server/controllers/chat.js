@@ -1,6 +1,8 @@
 import User from "../models/user.js";
 import Chat from "../models/chat.js";
+import { emitEvent, ALERT, REFETCH_CHATS, NEW_ATTACHEMENT, NEW_MESSAGE_ALERT} from "../utils/emitEvent.js";
 import { nanoid } from "nanoid";
+import Message from "../models/message.js";
 
 export const newGroupChat = async (req, res) => {
 	const { name, members } = req.body;
@@ -20,6 +22,8 @@ export const newGroupChat = async (req, res) => {
 		});
 
 		await chat.save();
+	  emitEvent(req, ALERT, allMembers,`Welcome to ${name} group`);
+		emitEvent(req, REFETCH_CHATS, members)
 
 		res.status(201).json({
 			success:true,
@@ -87,7 +91,9 @@ export const getChatMembers = async (req, res) => {
 			return res.status(404).json({ message: "Chat not found" });
 		}
 
-		const members = chat.members.map(member => ({
+		const members = chat.members
+		.filter(member => member._id.toString() !== chat.admin._id.toString())
+		.map(member => ({
 			_id: member._id,
 			username: member.username,  
 			avatar: member.avatar.url, 
@@ -118,7 +124,7 @@ export const addMembers = async(req,res)=>{
 		const chat = await Chat.findById(chatId);
 		if(!members || members.length < 1){
 			return res.status(400).json({message: "Please provide members"});
-		}
+		} 
 
 		if (!chat) {
 			return res.status(400).json({ message: "Chat not found" });
@@ -133,7 +139,7 @@ export const addMembers = async(req,res)=>{
 		}
 
 		const allNewMembers = await Promise.all(
-			members.map((i)=> User.findById(i, "name"))
+			members.map((i)=> User.findById(i, "username"))
 		);
 
 		const uniqueMembers = allNewMembers
@@ -143,6 +149,21 @@ export const addMembers = async(req,res)=>{
 		chat.members.push(...uniqueMembers.map((i)=> i._id));
 
 		await chat.save();
+
+		const allUsersName = allNewMembers.map((i)=> i.username).join(",");
+		
+		emitEvent(
+			req,
+			ALERT,
+			chat.members,
+			`${allUsersName} have been added to ${chat.name} by ${req.user.username}`
+		);
+		
+		emitEvent(
+			req,
+			REFETCH_CHATS,
+			chat.members,
+		);
 
 		res.status(200).json({
 			success: true,
@@ -159,7 +180,7 @@ export const removeMembers = async(req,res)=>{
 	try{	
 		const [chat, user] = await Promise.all([
 			Chat.findById(chatId),
-			User.findById(userId, "name")
+			User.findById(userId, "username")
 		]);
 
 		if(!chat){
@@ -183,6 +204,15 @@ export const removeMembers = async(req,res)=>{
 		);
 
 		await chat.save();
+		
+		emitEvent(
+			req,
+			ALERT,
+			chat.members,
+			`${user.username} has been removed from the group`
+		)
+
+		emitEvent(req,REFETCH_CHATS,chat.members);
 
 		res.status(200).json({
 			success: true,
@@ -208,18 +238,78 @@ export const leaveGroup = async(req,res)=>{
 		if(chat.admin.toString()=== req.user.toString()){
 			return res.status(400).json({ message: "Admin cannot leave the group"})
 		}
+		if(chat.members.length<=3){
+			return res.status(400).json({message: "Group must have atleast 3 members" })
+		}
 
 		chat.members = chat.members.filter(
-			(members)=> members.toString() !== req.user.toString()
+			(members)=> members.toString() !== req.user._id.toString()
 		);
+
+		await chat.save();
+
+		emitEvent(req,ALERT,chat.members,`${req.user.username} has left the group`);
+		
+		res.status(200).json({
+			success: true,
+			message: "Member left successfully",
+		});
+	}catch{
+		res.status(500).json({message: "Failed to leave group", error: error.message});
+	}
+}
+
+export const attachments = async(req,res)=>{
+	const { chatId } = req.body;
+
+	try{	
+		const [chat, user] = await Promise.all([
+			Chat.findById(chatId),
+			User.findById(req.user, "username avatar")
+		]);
+
+		if(!chat){
+			return res.status(400).json({ message: "Chat not found" })
+		}
+    
+		const files = req.files || [];
+		const attachments = [];
+		
+		const messageForDB = {
+			content:"",
+			attachments,
+			sender:user._id,
+			chat:chatId
+		}
+		const messageForRealTime = {
+			...messageForDB,
+			sender:{
+				_id : user._id,
+				name: user.username,
+				avatar: user.avatar,
+			},
+		}
+
+		const message = await Message.create(messageForDB);
+
+		if(files.length < 1) {
+			return res.status(400).json({message:"Please provide attachments"});
+		}
+    
+		emitEvent(req,NEW_ATTACHEMENT,chat.members,{
+			message:messageForRealTime,
+			chatId
+		});
+
+		emitEvent(req,NEW_MESSAGE_ALERT,chat.members,{chatId})
 
 		await chat.save();
 
 		res.status(200).json({
 			success: true,
-			message: "Member leave successfully",
+			message,
 		});
-	}catch{
-		res.status(500).json({message: "Failed to leave group", error: error.message});
+	}catch(error){
+		res.status(500).json({message: "Failed to upload attachments", error: error.message});
 	}
 }
