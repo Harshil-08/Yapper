@@ -7,6 +7,8 @@ import {
 	removeMembers,
 	leaveGroup,
 	attachments,
+	getChatDetails,
+	renameGroup,
 } from "../controllers/chat.js";
 import { attachmentsMulter } from "../middlewares/multer.js";
 
@@ -19,6 +21,6 @@ router.put("/add-members", addMembers);
 router.put("/remove-members", removeMembers);
 router.delete("/leave/:chatId", leaveGroup);
 router.post("/attachments", attachmentsMulter, attachments);
-router.route("/:id").get().post().delete()
+router.route("/:id").get(getChatDetails).post(renameGroup).delete()
 
 export default router;

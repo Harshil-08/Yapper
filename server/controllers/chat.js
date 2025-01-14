@@ -3,6 +3,7 @@ import Chat from "../models/chat.js";
 import { emitEvent, ALERT, REFETCH_CHATS, NEW_ATTACHEMENT, NEW_MESSAGE_ALERT} from "../utils/emitEvent.js";
 import { nanoid } from "nanoid";
 import Message from "../models/message.js";
+import { deleteFromCoudinary } from "../utils/deleteFromCloundinary.js";
 
 export const newGroupChat = async (req, res) => {
 	const { name, members } = req.body;
@@ -22,7 +23,7 @@ export const newGroupChat = async (req, res) => {
 		});
 
 		await chat.save();
-	  emitEvent(req, ALERT, allMembers,`Welcome to ${name} group`);
+		emitEvent(req, ALERT, allMembers,`Welcome to ${name} group`);
 		emitEvent(req, REFETCH_CHATS, members)
 
 		res.status(201).json({
@@ -85,7 +86,7 @@ export const getChatMembers = async (req, res) => {
 				path: "admin", 
 				select: "username avatar", 
 				model: "User"  
-			});
+		});
 
 		if (!chat) {
 			return res.status(404).json({ message: "Chat not found" });
@@ -151,14 +152,14 @@ export const addMembers = async(req,res)=>{
 		await chat.save();
 
 		const allUsersName = allNewMembers.map((i)=> i.username).join(",");
-		
+
 		emitEvent(
 			req,
 			ALERT,
 			chat.members,
 			`${allUsersName} have been added to ${chat.name} by ${req.user.username}`
 		);
-		
+
 		emitEvent(
 			req,
 			REFETCH_CHATS,
@@ -204,7 +205,7 @@ export const removeMembers = async(req,res)=>{
 		);
 
 		await chat.save();
-		
+
 		emitEvent(
 			req,
 			ALERT,
@@ -234,7 +235,7 @@ export const leaveGroup = async(req,res)=>{
 		if (!chat.groupChat) {
 			return res.status(400).json({ message: "This is not a group chat" });
 		}
-    
+
 		if(chat.admin.toString()=== req.user.toString()){
 			return res.status(400).json({ message: "Admin cannot leave the group"})
 		}
@@ -249,7 +250,7 @@ export const leaveGroup = async(req,res)=>{
 		await chat.save();
 
 		emitEvent(req,ALERT,chat.members,`${req.user.username} has left the group`);
-		
+
 		res.status(200).json({
 			success: true,
 			message: "Member left successfully",
@@ -271,10 +272,10 @@ export const attachments = async(req,res)=>{
 		if(!chat){
 			return res.status(400).json({ message: "Chat not found" })
 		}
-    
+
 		const files = req.files || [];
 		const attachments = [];
-		
+
 		const messageForDB = {
 			content:"",
 			attachments,
@@ -295,7 +296,7 @@ export const attachments = async(req,res)=>{
 		if(files.length < 1) {
 			return res.status(400).json({message:"Please provide attachments"});
 		}
-    
+
 		emitEvent(req,NEW_ATTACHEMENT,chat.members,{
 			message:messageForRealTime,
 			chatId
@@ -311,5 +312,98 @@ export const attachments = async(req,res)=>{
 		});
 	}catch(error){
 		res.status(500).json({message: "Failed to upload attachments", error: error.message});
+	}
+}
+
+export const getChatDetails = async(req,res)=>{
+	try{	
+		if(req.query.populate === "true"){
+			const chat = await Chat.findById(req.params.id).populate("members","username avatar").lean();
+			if(!chat) return res.status(402).json({message: "Chat not found"});
+
+			chat.members = chat.members.map(({_id, username, avatar})=>({
+				_id,
+				username,
+				avatar: avatar.url
+			}))
+
+			res.status(200).json({
+				success: true,
+				chat,
+			});
+		}else{
+			const chat = await Chat.findById(req.params.id);
+			if(!chat) return res.status(402).json({message: "Chat not found"})
+			res.status(200).json({
+				success: true,
+				chat,
+			});
+		}
+	}catch{
+		res.status(500).json({message: "Failed to get details", error: error.message});
+	}
+}
+
+export const renameGroup = async(req,res)=>{
+	try{	
+		const chatId = req.params.id;
+		const {name} = req.body;
+
+		const chat = await Chat.findById(chatId)
+		if(!chat) return res.status(402).json({message: "Chat not found"});
+		if(!chat.groupChat) return res.status(402).json({message:"Not a group chat"});
+
+		if(chat.admin.toString()!== req.user.toString()){
+			return res.status(402).json({message:"You are not allowed to rename the group"});
+		}
+		chat.name = name;
+		await chat.save();
+
+		emitEvent(req,REFETCH_CHATS,chat.members);
+		return res.status(200).json({
+			success:true,
+			message:"Group renamed successfully"
+		})
+	}catch{
+		res.status(500).json({message: "Failed to rename the group", error: error.message});
+	}
+}
+
+export const deleteChat = async(req,res)=>{
+	try{	
+		const chatId = req.params.id;
+
+		const chat = await Chat.findById(chatId)
+		if(!chat) return res.status(402).json({message: "Chat not found"});
+		if(!chat.groupChat) return res.status(402).json({message:"Not a group chat"});
+
+		if(chat.groupChat && chat.admin.toString()!== req.user.toString()){
+			return res.status(402).json({message:"You are not allowed to delete the group"});
+		}
+
+		const messageWithAttachments = await Message.find({
+			chat:chatId,
+			attachments:{ $exists: true, $ne:[]},
+		})
+
+		const public_ids = [];
+		messageWithAttachments.forEach(({attachments})=>
+			attachments.forEach(({public_id})=>
+				public_ids.push(public_id))
+		);
+		 
+		await Promise.all([
+			deleteFromCoudinary(public_ids),
+			chat.deleteOne(),
+			Message.deleteMany({chat:chatId}),
+		]);
+
+		emitEvent(req,REFETCH_CHATS,chat.members);
+		return res.status(200).json({
+			success:true,
+			message:"Chat deleted successfully"
+		})
+	}catch{
+		res.status(500).json({message: "Failed to delete the chat", error: error.message});
 	}
 }
