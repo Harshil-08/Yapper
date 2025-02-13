@@ -72,6 +72,49 @@ export const getMyChat = async (req, res) => {
 	}
 };
 
+export const joinGroupChat = async (req, res) => {
+    const { joinLink } = req.params;
+    try {
+        const chat = await Chat.findOne({ joinLink });
+
+        if (!chat) {
+            return res.status(404).json({ message: "Invalid join link or chat not found"});
+        }
+        if (!chat.groupChat) {
+            return res.status(400).json({ message: "This link is not for a group chat"});
+        }
+        if (chat.members.includes(req.user._id)) {
+            return res.status(400).json({ message: "You are already a member of this group"});
+        }
+
+        chat.members.push(req.user._id);
+        await chat.save();
+
+        const user = await User.findById(req.user._id, "username");
+
+        emitEvent(
+            req,
+            ALERT,
+            chat.members,
+            `${user.username} has joined the group`
+        );
+
+        emitEvent(
+            req,
+            REFETCH_CHATS,
+            chat.members
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Successfully joined the group chat"
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: "Failed to join group chat", error: error.message});
+    }
+};
+
 export const getChatMembers = async (req, res) => {
 	const { chatId } = req.params;
 
