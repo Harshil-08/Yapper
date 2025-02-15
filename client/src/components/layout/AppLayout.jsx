@@ -6,26 +6,35 @@ import MembersList from "./MembersList";
 import { useChat } from "../../contexts/ChatContext.jsx";
 
 const AppLayout = (WrappedComponent) => {
-  const HOC = (props) => {
-    const { selectedChat } = useChat();
-    const location = useLocation();
+	const HOC = (props) => {
+		const { selectedChat } = useChat();
+		const location = useLocation();
 
-    const isChatPage = location.pathname.startsWith("/chat");
+		const isChatPage = location.pathname.startsWith("/chat");
 
-    return (
-      <>
-        <Header />
-        <div className="flex h-screen">
-          <Sidebar />
-          <div className="flex flex-1">
-            <WrappedComponent {...props} chat={selectedChat} />
-          </div>
-          {isChatPage && selectedChat && <MembersList chatId={selectedChat._id} />}
-        </div>
-      </>
-    );
-  };
-  return HOC;
+		return (
+			<div className="flex flex-col h-screen">
+				<Header />
+
+				<div className="flex flex-1 overflow-hidden">
+					<div className="border-r border-gray-200 overflow-y-auto">
+						<Sidebar />
+					</div>
+
+					<div className="flex-1 overflow-y-auto">
+						<WrappedComponent {...props} chat={selectedChat} />
+					</div>
+
+					{isChatPage && selectedChat && (
+						<div className="border-l border-gray-200 overflow-y-auto">
+							<MembersList chatId={selectedChat._id} />
+						</div>
+					)}
+				</div>
+			</div>
+		);
+	};
+	return HOC;
 };
 
 export default AppLayout;

@@ -26,7 +26,7 @@ const Chat = ({ chat }) => {
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-white shadow-md border border-teal-300">
+    <div className="flex flex-col h-full flex-1 bg-white shadow-md border border-teal-300">
       <div className="p-4 text-lg font-bold">
         {chat.name}
       </div>
@@ -43,7 +43,7 @@ const Chat = ({ chat }) => {
           ))
         )}
       </div>
-      <div className="flex sticky items-center bottom-0 p-4">
+      <div className="flex items-center bottom-0 p-4">
         <input
           type="text"
           className="flex-1 px-4 py-2 rounded-l-lg border border-teal-300 focus:ring-2 focus:ring-teal-500"
