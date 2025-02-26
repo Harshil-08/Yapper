@@ -38,7 +38,7 @@ export const newGroupChat = async (req, res) => {
 export const getMyChat = async (req, res) => {
 	try {
 		const chats = await Chat.find({ members: req.user._id })
-			.populate("members", "name avatar")
+			.populate("members", "username avatar")
 
 		const formattedChats = chats.map(chat => {
 			let avatar, name;
@@ -49,7 +49,7 @@ export const getMyChat = async (req, res) => {
 			} else {
 				const otherMember = chat.members.find(member => member._id.toString() !== req.user._id.toString());
 				avatar = otherMember?.avatar;
-				name = otherMember?.name;
+				name = otherMember?.username;
 			}
 
 			return {
@@ -129,33 +129,45 @@ export const getChatMembers = async (req, res) => {
 				path: "admin", 
 				select: "username avatar", 
 				model: "User"  
-		});
+			});
 
 		if (!chat) {
 			return res.status(404).json({ message: "Chat not found" });
 		}
+		if (chat.groupChat){
+			const members = chat.members
+			.filter(member => member._id.toString() !== chat.admin._id.toString())
+			.map(member => ({
+				_id: member._id,
+				username: member.username,  
+				avatar: member.avatar.url, 
+			}));
 
-		const members = chat.members
-		.filter(member => member._id.toString() !== chat.admin._id.toString())
-		.map(member => ({
-			_id: member._id,
-			username: member.username,  
-			avatar: member.avatar.url, 
-		}));
+			const admin = chat.admin
+				? {
+					_id: chat.admin._id,
+					username: chat.admin.username,  
+					avatar: chat.admin.avatar.url, 
+				}
+				: null;
 
-		const admin = chat.admin
-			? {
-				_id: chat.admin._id,
-				username: chat.admin.username,  
-				avatar: chat.admin.avatar.url, 
-			}
-			: null;
+			res.status(200).json({
+				success: true,
+				admin,
+				members,
+			});
+		}else{
+			const members = chat.members.map(member => ({
+				_id: member._id,
+				username: member.username,
+				avatar: member.avatar?.url,
+			}));
 
-		res.status(200).json({
-			success: true,
-			admin,
-			members,
-		});
+			return res.status(200).json({
+				success: true,
+				members,
+			});
+		}
 	} catch (error) {
 		res.status(500).json({ message: "Failed to retrieve chat members", error: error.message });
 	}
@@ -213,7 +225,7 @@ export const addMembers = async(req,res)=>{
 			success: true,
 			message: "Members added successfully",
 		});
-	} catch{
+	} catch(error){
 		res.status(500).json({message: "Failed to add members", error: error.message});
 	}
 };
@@ -262,7 +274,7 @@ export const removeMembers = async(req,res)=>{
 			success: true,
 			message: "Members removed successfully",
 		});
-	}catch{
+	}catch(error){
 		res.status(500).json({message: "Failed to remove members", error: error.message});
 	}
 }
@@ -298,7 +310,7 @@ export const leaveGroup = async(req,res)=>{
 			success: true,
 			message: "Member left successfully",
 		});
-	}catch{
+	}catch(error){
 		res.status(500).json({message: "Failed to leave group", error: error.message});
 	}
 }
@@ -382,7 +394,7 @@ export const getChatDetails = async(req,res)=>{
 				chat,
 			});
 		}
-	}catch{
+	}catch(error){
 		res.status(500).json({message: "Failed to get details", error: error.message});
 	}
 }
@@ -407,7 +419,7 @@ export const renameGroup = async(req,res)=>{
 			success:true,
 			message:"Group renamed successfully"
 		})
-	}catch{
+	}catch(error){
 		res.status(500).json({message: "Failed to rename the group", error: error.message});
 	}
 }
@@ -446,7 +458,7 @@ export const deleteChat = async(req,res)=>{
 			success:true,
 			message:"Chat deleted successfully"
 		})
-	}catch{
+	}catch(error){
 		res.status(500).json({message: "Failed to delete the chat", error: error.message});
 	}
 }
@@ -475,7 +487,7 @@ export const getMessage = async(req,res)=>{
 			messages: message.reverse(),
 			totalPages,
 		})
-	}catch{
+	}catch(error){
 		res.status(500).json({message: "Failed to delete the chat", error: error.message});
 	}
 }

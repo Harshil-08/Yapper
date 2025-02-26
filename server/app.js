@@ -4,7 +4,8 @@ import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import 'dotenv/config';
 import authRouter from "./routes/auth.js";
-import chatRouter from "./routes/chat.js"
+import chatRouter from "./routes/chat.js";
+import userRouter from "./routes/user.js";
 import { auth } from "./middlewares/auth.js"
 import path from "path";
 
@@ -22,9 +23,9 @@ app.use(
 );
 app.use(cookieParser());
 
-app.use('/api/auth',authRouter);
-app.use('/api/chats',auth,chatRouter);
-
+app.use('/api/auth', authRouter);
+app.use('/api/chats', auth, chatRouter);
+app.use('/api/user', auth, userRouter);
 
 const __dirname = path.resolve();
 app.use(express.static(path.join(__dirname, "/client/dist")));
