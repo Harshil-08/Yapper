@@ -12,7 +12,7 @@ const Login = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			const response = await axios.post('/api/auth/login', { email, password, remember });
+			await axios.post('/api/auth/login', { email, password, remember });
 			alert('Login successful');
 			navigate('/home');
 		} catch (err) {

@@ -56,7 +56,7 @@ const Sidebar = () => {
 			<div className="p-4 bg-teal-600 text-white bottom-0">
 				<div className="flex items-center p-3 bg-teal-700 rounded-lg mb-2 shadow">
 					<img
-						src="https://via.placeholder.com/40"
+						src="https://via.placeholder.com/100"
 						alt="User profile"
 						className="w-10 h-10 rounded-full mr-3"
 					/>

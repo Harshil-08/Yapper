@@ -17,7 +17,7 @@ const AppLayout = (WrappedComponent) => {
 				<Header />
 
 				<div className="flex flex-1 overflow-hidden">
-					<div className="border-r border-gray-200 overflow-y-auto">
+					<div className="overflow-y-auto">
 						<Sidebar />
 					</div>
 
@@ -26,7 +26,7 @@ const AppLayout = (WrappedComponent) => {
 					</div>
 
 					{isChatPage && selectedChat && (
-						<div className="border-l border-gray-200 overflow-y-auto">
+						<div className="overflow-y-auto">
 							<MembersList chatId={selectedChat._id} />
 						</div>
 					)}
