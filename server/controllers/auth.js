@@ -167,7 +167,7 @@ export const googleAuth = async (req, res) => {
 	}
 };
 
-export const signout = (req, res) => {
+export const logout = (req, res) => {
 	res
 		.clearCookie("access_token")
 		.status(200)

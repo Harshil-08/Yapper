@@ -13,7 +13,6 @@ const Login = () => {
 		e.preventDefault();
 		try {
 			await axios.post('/api/auth/login', { email, password, remember });
-			alert('Login successful');
 			navigate('/home');
 		} catch (err) {
 			if (err.response?.status === 401) {

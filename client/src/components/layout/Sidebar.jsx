@@ -27,6 +27,16 @@ const Sidebar = () => {
 		navigate(`/chat/${chat.name}`);
 	};
 
+	const handleLogout = async () => {
+		try {
+			await axios.post("/api/auth/logout", { withCredentials: true }); 
+			localStorage.removeItem("selectedChat");
+			navigate("/"); 
+		} catch (error) {
+			console.error("Logout failed:", error.message);
+		}
+	};
+
 	return (
 		<div className="flex flex-col h-full w-64 bg-white text-teal-900 border-r border-teal-300 shadow-md">
 			<div className="flex-1 overflow-y-auto p-4">
@@ -67,9 +77,7 @@ const Sidebar = () => {
 
 				<button
 					className="w-full py-2 text-sm font-semibold bg-teal-500 rounded-lg hover:bg-teal-400 transition duration-150"
-					onClick={() => {
-						console.log('Logout');
-					}}
+					onClick={handleLogout}
 				>
 					Logout
 				</button>
