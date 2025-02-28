@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 
 const Login = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [remember, setRemember] = useState(false);
 	const [message, setMessage] = useState("");
-	const navigate = useNavigate();
-  
+	const navigate = useNavigate(); 
+  const { setUser } = useUser()
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			await axios.post('/api/auth/login', { email, password, remember });
+			const res = await axios.post('/api/auth/login', { email, password, remember });
+			console.log(res)
+			setUser(res.data.data)
 			navigate('/home');
 		} catch (err) {
 			if (err.response?.status === 401) {

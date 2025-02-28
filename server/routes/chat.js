@@ -18,7 +18,7 @@ import { attachmentsMulter } from "../middlewares/multer.js";
 const router = express.Router();
 
 router.post("/create-group", newGroupChat);
-router.post("/join/:joinLink", joinGroupChat)
+router.post("/join", joinGroupChat)
 router.get("/user-chats", getMyChat);
 router.get("/:chatId/members", getChatMembers);
 router.put("/add-members", addMembers);

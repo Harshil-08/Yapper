@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
-	const [username, setUsername] = useState('');
+	const [name, setname] = useState('');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [message, setMessage] = useState('');
@@ -12,7 +12,7 @@ const Signup = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			await axios.post('/api/auth/signup', { username, email, password });
+			await axios.post('/api/auth/signup', { name, email, password });
 			setMessage({ type: 'success', text: 'Signup successful!' });
 			setTimeout(() => navigate('/login'), 2000);
 		} catch (err) {
@@ -31,9 +31,9 @@ const Signup = () => {
 				<form className='flex flex-col space-y-4' onSubmit={handleSubmit}>
 					<input
 						type="text"
-						placeholder="Username"
-						value={username}
-						onChange={(e) => setUsername(e.target.value)}
+						placeholder="Name"
+						value={name}
+						onChange={(e) => setname(e.target.value)}
 						required
 						className='p-2 border border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500'
 					/>

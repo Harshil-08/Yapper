@@ -4,17 +4,17 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.js";
 
 export const signup = async (req, res) => {
-	const { username, email, password } = req.body;
+	const { name, email, password } = req.body;
 
 	try {
-		if (!username || !email || !password) {
+		if (!name || !email || !password) {
 			return res.status(401).json({ message: "Invalid credentials!" });
 		}
 
-		const existingUsername = await User.findOne({ username });
+		const existingname = await User.findOne({ name });
 		const existingEmail = await User.findOne({ email });
 
-		if (existingUsername) {
+		if (existingname) {
 			return res.status(403).json({
 				message: "Username already exisits!",
 				success: false,
@@ -30,7 +30,17 @@ export const signup = async (req, res) => {
 		const salt = 12;
 		const hashedPassword = await bcrypt.hash(password, salt);
 
+		let baseUsername = name.toLowerCase().replace(/\s+/g, ""); 
+		let username = baseUsername;
+		let counter = 1;
+
+		while (await User.exists({ username })) {
+			username = `${baseUsername}${counter}`;
+			counter++;
+		}
+
 		const user = await User.create({
+			name,
 			username,
 			email,
 			password: hashedPassword,

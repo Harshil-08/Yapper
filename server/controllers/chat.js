@@ -73,12 +73,12 @@ export const getMyChat = async (req, res) => {
 };
 
 export const joinGroupChat = async (req, res) => {
-    const { joinLink } = req.params;
+    const { joinLink } = req.query;
     try {
         const chat = await Chat.findOne({ joinLink });
 
         if (!chat) {
-            return res.status(404).json({ message: "Invalid join link or chat not found"});
+            return res.status(404).json({ message: "Invalid join link or Group not found"});
         }
         if (!chat.groupChat) {
             return res.status(400).json({ message: "This link is not for a group chat"});
@@ -374,7 +374,7 @@ export const getChatDetails = async(req,res)=>{
 	try{	
 		if(req.query.populate === "true"){
 			const chat = await Chat.findById(req.params.id).populate("members","username avatar").lean();
-			if(!chat) return res.status(402).json({message: "Chat not found"});
+			if(!chat) return res.status(400).json({message: "Chat not found"});
 
 			chat.members = chat.members.map(({_id, username, avatar})=>({
 				_id,
@@ -388,7 +388,7 @@ export const getChatDetails = async(req,res)=>{
 			});
 		}else{
 			const chat = await Chat.findById(req.params.id);
-			if(!chat) return res.status(402).json({message: "Chat not found"})
+			if(!chat) return res.status(400).json({message: "Chat not found"})
 			res.status(200).json({
 				success: true,
 				chat,
@@ -405,11 +405,11 @@ export const renameGroup = async(req,res)=>{
 		const {name} = req.body;
 
 		const chat = await Chat.findById(chatId)
-		if(!chat) return res.status(402).json({message: "Chat not found"});
-		if(!chat.groupChat) return res.status(402).json({message:"Not a group chat"});
+		if(!chat) return res.status(400).json({message: "Chat not found"});
+		if(!chat.groupChat) return res.status(400).json({message:"Not a group chat"});
 
 		if(chat.admin.toString()!== req.user.toString()){
-			return res.status(402).json({message:"You are not allowed to rename the group"});
+			return res.status(400).json({message:"You are not allowed to rename the group"});
 		}
 		chat.name = name;
 		await chat.save();

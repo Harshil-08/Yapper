@@ -31,6 +31,7 @@ const Sidebar = () => {
 		try {
 			await axios.post("/api/auth/logout", { withCredentials: true }); 
 			localStorage.removeItem("selectedChat");
+			localStorage.removeItem("user");
 			navigate("/"); 
 		} catch (error) {
 			console.error("Logout failed:", error.message);

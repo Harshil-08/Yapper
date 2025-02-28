@@ -3,6 +3,10 @@ import validator from "validator";
 
 const UserSchema = new mongoose.Schema(
 	{
+		name:{
+			type:String,
+			required: true,
+		},
 		username: {
 			type: String,
 			required: true,

@@ -72,3 +72,4 @@ export const searchUser = async (req, res) => {
     return res.status(500).json({message: "Failed to search for users",error: error.message });
   }
 };
+
