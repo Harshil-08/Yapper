@@ -16,7 +16,7 @@ const Chat = ({ chat }) => {
   useEffect(() => {
     if (!chat) return
 
-    socketRef.current = io("http://yapper-fm7z.onrender.com", { transports: ["websocket"] })
+    socketRef.current = io("https://yapper-fm7z.onrender.com", { transports: ["websocket"] })
     socketRef.current.emit("join_room", { chatId: chat._id, page: 1 })
     socketRef.current.on("load_messages", ({ loadedMessages, hasMore: more }) => {
       setMessages(loadedMessages)
