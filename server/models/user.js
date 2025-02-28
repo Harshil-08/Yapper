@@ -36,7 +36,7 @@ const UserSchema = new mongoose.Schema(
 			},
 			url: {
 				type: String,
-				default: "https://via.placeholder.com/100",
+				default: "https://avatar.iran.liara.run/public",
 			},
 		},
 		accessToken: {

@@ -462,32 +462,3 @@ export const deleteChat = async(req,res)=>{
 		res.status(500).json({message: "Failed to delete the chat", error: error.message});
 	}
 }
-
-export const getMessage = async(req,res)=>{
-	try{	
-		const chatId = req.params.id;
-  	const {page = 1 } =req.query;
- 		const limit = 20;
-
-		const skip = (page - 1) * limit;
-		const [message, totalMessageCount] = await Promise.all([ 
-			Message.find({chat: chatId})
-			.sort({ createdAt: -1})
-			.skip(skip)
-			.limit(limit)
-			.populate("sender","username avatar")
-			.lean(),
-			Message.countDocuments({ chat: chatId}),
-		]);
-
-		const totalPages = Math.ceil(totalMessageCount/ limit) || 0;
-
-		return res.status(200).json({
-			success:true,
-			messages: message.reverse(),
-			totalPages,
-		})
-	}catch(error){
-		res.status(500).json({message: "Failed to delete the chat", error: error.message});
-	}
-}
