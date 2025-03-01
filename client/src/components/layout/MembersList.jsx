@@ -64,7 +64,7 @@ const MembersList = ({ chatId, closeMembers }) => {
             alt={`${admin.username} profile`}
             className="w-10 h-10 rounded-full mr-3"
           />
-          <p className="font-semibold text-teal-900 dark:text-white">{admin.username} (Admin)</p>
+          <p className="font-semibold text-teal-900 dark:text-white">{admin.name} (Admin)</p>
         </div>
       )}
 
@@ -81,7 +81,7 @@ const MembersList = ({ chatId, closeMembers }) => {
               alt={`${member.username} profile`}
               className="w-10 h-10 rounded-full mr-3"
             />
-            <p className="font-semibold text-teal-900 dark:text-white">{member.username}</p>
+            <p className="font-semibold text-teal-900 dark:text-white">{member.name}</p>
           </div>
         ))
       )}
@@ -89,5 +89,5 @@ const MembersList = ({ chatId, closeMembers }) => {
   )
 }
 
-export default MembersList
+export default MembersList;
 
