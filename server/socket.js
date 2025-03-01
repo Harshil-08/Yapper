@@ -17,13 +17,16 @@ export const handleWebsocket = (server) => {
 					.sort({ createdAt: -1 })
 					.skip((page - 1) * pageSize)
 					.limit(pageSize)
-					.populate("sender", "username avatar")
+					.populate("sender", "name username avatar")
 					.lean();
 					
 				const totalMessages = await Message.countDocuments({ chat: chatId });
 				const hasMore = totalMessages > page * pageSize;
-				
-				socket.emit("load_messages", { loadedMessages: messages.reverse(), hasMore });
+
+				socket.emit("load_messages", { 
+					loadedMessages: messages.reverse().map(msg => ({ ...msg, timestamp: msg.createdAt })), 
+					hasMore 
+				});
 			} catch (error) {
 				console.error("Error loading messages:", error);
 			}
@@ -36,13 +39,16 @@ export const handleWebsocket = (server) => {
 					.sort({ createdAt: -1 })
 					.skip((page - 1) * pageSize)
 					.limit(pageSize)
-					.populate("sender", "username avatar")
+					.populate("sender", "name username avatar")
 					.lean();
 					
 				const totalMessages = await Message.countDocuments({ chat: chatId });
 				const hasMore = totalMessages > page * pageSize;
-				
-				socket.emit("load_more_messages", { loadedMessages: messages.reverse(), hasMore });
+
+				socket.emit("load_more_messages", { 
+					loadedMessages: messages.reverse().map(msg => ({ ...msg, timestamp: msg.createdAt })), 
+					hasMore 
+				});
 			} catch (error) {
 				console.error("Error loading more messages:", error);
 			}
@@ -53,10 +59,9 @@ export const handleWebsocket = (server) => {
 			try {
 				const newMessage = await new Message({ sender, content, chat }).save();
 				const populatedMessage = await Message.findById(newMessage._id)
-					.populate("sender", "username avatar")
+					.populate("sender", "name username avatar")
 					.lean();
-					
-				console.log(populatedMessage);
+				populatedMessage.timestamp = populatedMessage.createdAt;
 				io.to(chat).emit("receive_message", populatedMessage);
 			} catch (error) {
 				console.error("Error saving message:", error);

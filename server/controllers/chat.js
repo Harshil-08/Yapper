@@ -38,7 +38,7 @@ export const newGroupChat = async (req, res) => {
 export const getMyChat = async (req, res) => {
 	try {
 		const chats = await Chat.find({ members: req.user._id })
-			.populate("members", "username avatar")
+			.populate("members", "name avatar")
 
 		const formattedChats = chats.map(chat => {
 			let avatar, name;
@@ -49,7 +49,7 @@ export const getMyChat = async (req, res) => {
 			} else {
 				const otherMember = chat.members.find(member => member._id.toString() !== req.user._id.toString());
 				avatar = otherMember?.avatar;
-				name = otherMember?.username;
+				name = otherMember?.name;
 			}
 
 			return {
@@ -96,7 +96,7 @@ export const joinGroupChat = async (req, res) => {
             req,
             ALERT,
             chat.members,
-            `${user.username} has joined the group`
+            `${user.name} has joined the group`
         );
 
         emitEvent(
@@ -122,12 +122,12 @@ export const getChatMembers = async (req, res) => {
 		const chat = await Chat.findById(chatId)
 			.populate({
 				path: "members", 
-				select: "username avatar", 
+				select: "name username avatar", 
 				model: "User" 
 			})
 			.populate({
 				path: "admin", 
-				select: "username avatar", 
+				select: "name username avatar", 
 				model: "User"  
 			});
 
@@ -139,6 +139,7 @@ export const getChatMembers = async (req, res) => {
 			.filter(member => member._id.toString() !== chat.admin._id.toString())
 			.map(member => ({
 				_id: member._id,
+				name:member.name,
 				username: member.username,  
 				avatar: member.avatar.url, 
 			}));
@@ -146,6 +147,7 @@ export const getChatMembers = async (req, res) => {
 			const admin = chat.admin
 				? {
 					_id: chat.admin._id,
+					name: chat.admin.name,
 					username: chat.admin.username,  
 					avatar: chat.admin.avatar.url, 
 				}
@@ -159,6 +161,7 @@ export const getChatMembers = async (req, res) => {
 		}else{
 			const members = chat.members.map(member => ({
 				_id: member._id,
+				name: member.name,
 				username: member.username,
 				avatar: member.avatar?.url,
 			}));
@@ -373,11 +376,12 @@ export const attachments = async(req,res)=>{
 export const getChatDetails = async(req,res)=>{
 	try{	
 		if(req.query.populate === "true"){
-			const chat = await Chat.findById(req.params.id).populate("members","username avatar").lean();
+			const chat = await Chat.findById(req.params.id).populate("members","name username avatar").lean();
 			if(!chat) return res.status(400).json({message: "Chat not found"});
 
-			chat.members = chat.members.map(({_id, username, avatar})=>({
+			chat.members = chat.members.map(({_id, name, username, avatar})=>({
 				_id,
+				name,
 				username,
 				avatar: avatar.url
 			}))

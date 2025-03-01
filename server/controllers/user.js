@@ -22,7 +22,7 @@ export const createDMChat = async (req, res) => {
 		let chat = await Chat.findOne({
 			groupChat: false,
 			members: [req.user._id, userId],
-		}).populate("members", "username avatar");
+		}).populate("members", "name username avatar");
 
 		if (chat) {
 			return res.status(200).json({
@@ -33,14 +33,14 @@ export const createDMChat = async (req, res) => {
 		}
 
 		chat = await Chat.create({
-			name: user.username,
+			name: user.name,
 			groupChat: false,
 			members: [req.user._id, userId],
 		});
 
 		await chat.save();
 
-		emitEvent(req, ALERT, [req.user._id, userId], `Group chat "${user.username}" created successfully`);
+		emitEvent(req, ALERT, [req.user._id, userId], `Group chat "${user.name}" created successfully`);
 		emitEvent(req, REFETCH_CHATS, [req.user._id, userId]);
 
 		return res.status(201).json({
