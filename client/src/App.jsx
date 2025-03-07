@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ChatProvider } from './contexts/ChatContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { UserProvider } from './contexts/UserContext';
+import { LoadingSpinner } from './pages/LoadinSpinner';
 const Landing = lazy(() => import('./pages/Landing'));
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
@@ -16,7 +17,7 @@ const App = () => {
 			<UserProvider>
 				<ChatProvider>
 					<ThemeProvider>
-						<Suspense fallback={<div>Loading...</div>}>
+						<Suspense fallback={LoadingSpinner}>
 							<Routes>
 								<Route path="/" element={<Landing />} />
 								<Route path="/home" element={<Home />} />

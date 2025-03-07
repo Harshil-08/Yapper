@@ -15,7 +15,7 @@ const NotFound = () => {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           className="mt-6 px-4 py-2 bg-teal-600 text-white font-semibold rounded-md shadow hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-400"
         >
           Go to Homepage
