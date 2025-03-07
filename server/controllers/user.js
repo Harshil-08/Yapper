@@ -14,14 +14,16 @@ export const createDMChat = async (req, res) => {
 	}
 
 	try {
-		const user = await User.findById(userId, "username");
+		const user = await User.findById(userId, "name username");
 		if (!user) {
 			return res.status(404).json({ message: "User not found." });
 		}
 
 		let chat = await Chat.findOne({
+			name: user.username,
 			groupChat: false,
 			members: [req.user._id, userId],
+			joinLink: undefined,
 		}).populate("members", "name username avatar");
 
 		if (chat) {
@@ -33,9 +35,10 @@ export const createDMChat = async (req, res) => {
 		}
 
 		chat = await Chat.create({
-			name: user.name,
+			name: user.username,
 			groupChat: false,
 			members: [req.user._id, userId],
+			joinLink: undefined,
 		});
 
 		await chat.save();

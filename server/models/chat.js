@@ -33,7 +33,7 @@ const ChatSchema = new mongoose.Schema(
 		joinLink: {
 			type: String,
 			unique: true,
-			required: function() { return this.groupChat; },
+			sparse: true,
 		},
 	},
 	{ 
