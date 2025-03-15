@@ -94,7 +94,7 @@ const Chat = ({ chat }) => {
 
 	return (
 		<div className="flex flex-col h-full flex-1 bg-white dark:bg-gray-800 shadow-md">
-			<div className="p-4 text-lg font-bold border-b border-teal-300 dark:border-gray-700">
+			<div className="p-3 text-lg font-bold border-b border-teal-300 dark:border-gray-700">
 				<span className="text-teal-700 dark:text-teal-300">{chat.name}</span>
 			</div>
 

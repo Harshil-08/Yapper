@@ -34,9 +34,8 @@ const Sidebar = ({ closeSidebar }) => {
   const handleLogout = async () => {
     try {
       await axios.post("/api/auth/logout", { withCredentials: true })
-      localStorage.removeItem("selectedChat")
-      localStorage.removeItem("user")
-      navigate("/")
+      localStorage.clear()
+			navigate("/")
     } catch (error) {
       console.log("Logout failed:", error.message)
     }

@@ -16,7 +16,7 @@ const Header = ({ toggleSidebar, toggleMembers, showMembersToggle }) => {
     <>
       <div
         className={`${theme && "dark"} 
-        flex items-center justify-between gap-2 p-3 bg-teal-600 dark:bg-black text-white shadow-md`}
+        flex items-center justify-between gap-2 p-2 bg-teal-600 dark:bg-black text-white shadow-md`}
       >
         <div className="flex items-center gap-2">
           <button
@@ -26,7 +26,7 @@ const Header = ({ toggleSidebar, toggleMembers, showMembersToggle }) => {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <img src={logo} alt="Yapper Logo" className="w-8 h-8 md:w-10 md:h-10" />
+          <img src={logo} alt="Yapper Logo" className="w-8 h-8 md:w-9 md:h-9" />
           <h1 className="text-xl md:text-2xl font-bold">Yapper</h1>
         </div>
         <div className="flex items-center gap-2 md:gap-4">

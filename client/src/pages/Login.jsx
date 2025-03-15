@@ -14,8 +14,7 @@ const Login = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			const res = await axios.post('/api/auth/login', { email, password, remember });
-			console.log(res)
+			const res = await axios.post('/api/auth/login', { email, password, remember },{ withCredentials: true });
 			setUser(res.data.data)
 			navigate('/home');
 		} catch (err) {
