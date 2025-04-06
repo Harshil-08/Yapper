@@ -18,7 +18,7 @@ const Landing = () => {
 					</p>
 					<button
 						className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-xl font-semibold rounded-lg shadow-lg transform transition-all duration-300"
-						onClick={() => navigate('/signup')}
+						onClick={() => navigate('/home')}
 						role="button"
 						aria-label="Sign up for Yapper"
 					>

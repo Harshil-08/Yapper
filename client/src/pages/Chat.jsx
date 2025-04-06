@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from "react"
 import { io } from "socket.io-client"
 import AppLayout from "../components/layout/AppLayout"
 import { useUser } from "../contexts/UserContext"
+import { ChevronDown } from "lucide-react"
 
 const Chat = ({ chat }) => {
 	const [message, setMessage] = useState("")
 	const [messages, setMessages] = useState([])
 	const [page, setPage] = useState(1)
 	const [hasMore, setHasMore] = useState(false)
+	const [open, setOpen] = useState(null)
 	const containerRef = useRef(null)
 	const messagesEndRef = useRef(null)
 	const socketRef = useRef(null)
@@ -65,6 +67,17 @@ const Chat = ({ chat }) => {
 		return () => container.removeEventListener("scroll", handleScroll)
 	}, [page, hasMore, chat])
 
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (open && !event.target.closest('.message-dropdown')) {
+				setOpen(null)
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside)
+		return () => document.removeEventListener('mousedown', handleClickOutside)
+	}, [open])
+
 	const scrollToBottom = () => {
 		setTimeout(() => {
 			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -82,6 +95,10 @@ const Chat = ({ chat }) => {
 			socketRef.current.emit("send_message", newMessage)
 			setMessage("")
 		}
+	}
+
+	const toggleDropdown = (messageId) => {
+		setOpen(prev => prev === messageId ? null : messageId)
 	}
 
 	if (!chat) {
@@ -116,16 +133,49 @@ const Chat = ({ chat }) => {
 								)}
 
 								<div
-									className={`p-3 rounded-lg max-w-[75%] shadow-md ${
- 										msg.sender?._id === user?._id
- 										? "bg-teal-100 dark:bg-teal-900/30 text-left self-end"
+									className={`p-3 rounded-lg max-w-[75%] shadow-md ${msg.sender?._id === user?._id
+										? "bg-teal-100 dark:bg-teal-900/30 text-left self-end"
 										: "bg-gray-100 dark:bg-gray-700 self-start"
-									}`}
-								>
-									{/* Sender Name */}
-									<span className="block font-semibold text-teal-700 dark:text-teal-300 text-sm mb-1">
-										{msg.sender?._id === user?._id ? "You" : msg.sender?.name}
-									</span>
+										}
+									`}>
+									<div className="flex gap-2 justify-between items-center group relative">
+										<span className="block font-semibold text-teal-700 dark:text-teal-300 text-sm mb-1">
+											{msg.sender?._id === user?._id ? "You" : msg.sender?.name}
+										</span>
+
+										{/* Chevron icon */}
+										<div
+											className="hidden group-hover:block cursor-pointer message-dropdown"
+											onClick={() => toggleDropdown(msg._id)}
+										>
+											<ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+										</div>
+
+										{/* Dropdown */}
+										{open === msg._id && (
+											<div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-gray-800 
+												rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 message-dropdown">
+												<ul className="py-1">
+													<li className="px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 
+														cursor-pointer text-teal-600 dark:text-teal-300">
+														Reply
+													</li>
+													{msg.sender?._id === user?._id && (
+														<>
+															<li className="px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 
+																cursor-pointer text-teal-600 dark:text-teal-300">
+																Edit
+															</li>
+															<li className="px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 
+																cursor-pointer text-red-600 dark:text-red-400">
+																Delete
+															</li>
+														</>
+													)}
+												</ul>
+											</div>
+										)}
+									</div>
 
 									{/* Message Content & Timestamp */}
 									<div className="flex items-end justify-between">
