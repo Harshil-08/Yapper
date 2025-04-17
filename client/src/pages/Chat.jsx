@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { io } from "socket.io-client"
 import AppLayout from "../components/layout/AppLayout"
 import { useUser } from "../contexts/UserContext"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Reply, Edit2, Trash2 } from "lucide-react"
 
 const Chat = ({ chat }) => {
 	const [message, setMessage] = useState("")
@@ -10,6 +10,8 @@ const Chat = ({ chat }) => {
 	const [page, setPage] = useState(1)
 	const [hasMore, setHasMore] = useState(false)
 	const [open, setOpen] = useState(null)
+	const [editingMessage, setEditingMessage] = useState(null)
+	const [replyingTo, setReplyingTo] = useState(null)
 	const containerRef = useRef(null)
 	const messagesEndRef = useRef(null)
 	const socketRef = useRef(null)
@@ -44,10 +46,26 @@ const Chat = ({ chat }) => {
 			}
 		})
 
+		socketRef.current.on("message_deleted", ({ messageId }) => {
+			setMessages((prevMessages) => 
+				prevMessages.filter(msg => msg._id !== messageId)
+			)
+		})
+
+		socketRef.current.on("message_edited", ({ messageId, content }) => {
+			setMessages((prevMessages) => 
+				prevMessages.map(msg => 
+					msg._id === messageId ? { ...msg, content } : msg
+				)
+			)
+		})
+
 		return () => {
 			socketRef.current.off("load_messages")
 			socketRef.current.off("receive_message")
 			socketRef.current.off("load_more_messages")
+			socketRef.current.off("message_deleted")
+			socketRef.current.off("message_edited")
 		}
 	}, [chat])
 
@@ -86,15 +104,70 @@ const Chat = ({ chat }) => {
 
 	const handleSend = () => {
 		if (message.trim() && chat && user) {
+			if (editingMessage) {
+				handleEditMessage()
+				return
+			}
+
 			const newMessage = {
 				sender: user._id,
 				content: message,
 				chat: chat._id,
 			}
 
-			socketRef.current.emit("send_message", newMessage)
-			setMessage("")
+			if (replyingTo) {
+				socketRef.current.emit("reply_message", {
+					sender: user._id,
+					content: message,
+					chat: chat._id,
+					replyToMessageId: replyingTo._id
+				});
+				setMessage("");
+				setReplyingTo(null);
+			} else {
+				socketRef.current.emit("send_message", newMessage)
+				setMessage("")
+			}
 		}
+	}
+
+	const handleEditMessage = () => {
+		socketRef.current.emit("edit_message", {
+			messageId: editingMessage._id,
+			content: message,
+			chatId: chat._id
+		});
+		setMessage("");
+		setEditingMessage(null);
+	};
+
+	const handleDeleteMessage = (messageId) => {
+		socketRef.current.emit("delete_message", { 
+			messageId,
+			chatId: chat._id
+		});
+		setOpen(null)
+	};
+
+
+	const startReply = (message) => {
+		setReplyingTo(message)
+		setOpen(null) 
+		setMessage("")
+		document.querySelector('input[type="text"]').focus()
+	}
+
+	const startEdit = (message) => {
+		setEditingMessage(message)
+		setMessage(message.content)
+		setOpen(null) 
+		document.querySelector('input[type="text"]').focus()
+	}
+
+	const cancelAction = () => {
+		setReplyingTo(null)
+		setEditingMessage(null)
+		setMessage("")
 	}
 
 	const toggleDropdown = (messageId) => {
@@ -107,6 +180,12 @@ const Chat = ({ chat }) => {
 				<p className="text-teal-600 dark:text-teal-300 font-semibold">Select a chat to start messaging</p>
 			</div>
 		)
+	}
+
+	const getReplyToMessage = (replyToId) => {
+		const replyMessage = messages.find(msg => msg._id === replyToId);
+  	if (replyMessage) return replyMessage;
+  	return null;
 	}
 
 	return (
@@ -157,17 +236,23 @@ const Chat = ({ chat }) => {
 												rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 message-dropdown">
 												<ul className="py-1">
 													<li className="px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 
-														cursor-pointer text-teal-600 dark:text-teal-300">
+														cursor-pointer text-teal-600 dark:text-teal-300 flex items-center gap-2"
+														onClick={() => startReply(msg)}>
+														<Reply size={14} />
 														Reply
 													</li>
 													{msg.sender?._id === user?._id && (
 														<>
 															<li className="px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 
-																cursor-pointer text-teal-600 dark:text-teal-300">
+																cursor-pointer text-teal-600 dark:text-teal-300 flex items-center gap-2"
+																onClick={() => startEdit(msg)}>
+																<Edit2 size={14} />
 																Edit
 															</li>
 															<li className="px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 
-																cursor-pointer text-red-600 dark:text-red-400">
+																cursor-pointer text-red-600 dark:text-red-400 flex items-center gap-2"
+																onClick={() => handleDeleteMessage(msg._id)}>
+																<Trash2 size={14} />
 																Delete
 															</li>
 														</>
@@ -176,6 +261,20 @@ const Chat = ({ chat }) => {
 											</div>
 										)}
 									</div>
+									
+									{/* Reply Info */}
+									{msg.replyTo && (
+										<div className="bg-teal-50 dark:bg-gray-700/50 p-2 rounded mb-2 text-xs border-l-2 border-teal-500 dark:border-teal-700">
+											<p className="text-gray-500 dark:text-gray-400">
+												{getReplyToMessage(msg.replyTo)?.sender?.name || 
+													(msg.replyTo?.sender?.name || "Unknown user")}
+											</p>
+											<p className="text-gray-700 dark:text-gray-300 truncate">
+												{getReplyToMessage(msg.replyTo)?.content || 
+													(msg.replyTo?.content || "Original message not available")}
+											</p>
+										</div>
+									)}
 
 									{/* Message Content & Timestamp */}
 									<div className="flex items-end justify-between">
@@ -201,12 +300,42 @@ const Chat = ({ chat }) => {
 				<div ref={messagesEndRef} />
 			</div>
 
+			{(replyingTo || editingMessage) && (
+				<div className="px-3 py-2 bg-teal-50 dark:bg-gray-700 flex justify-between items-center">
+					<div className="flex items-center">
+						{replyingTo && (
+							<div className="text-sm">
+								<span className="text-teal-700 dark:text-teal-300 font-medium">
+									Replying to {replyingTo.sender?._id === user?._id ? "yourself" : replyingTo.sender?.name}:
+								</span>
+								<p className="text-gray-600 dark:text-gray-300 truncate max-w-[200px] md:max-w-[400px]">
+									{replyingTo.content}
+								</p>
+							</div>
+						)}
+						{editingMessage && (
+							<div className="text-sm">
+								<span className="text-amber-600 dark:text-amber-400 font-medium">
+									Editing message
+								</span>
+							</div>
+						)}
+					</div>
+					<button 
+						className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+						onClick={cancelAction}
+					>
+						Cancel
+					</button>
+				</div>
+			)}
+
 			{/* Input Box */}
 			<div className="flex items-center bottom-0 p-3 md:p-3 border-t border-teal-300 dark:border-gray-700 bg-white dark:bg-gray-900">
 				<input
 					type="text"
 					className="flex-1 px-3 md:px-4 py-2 rounded-l-lg border border-teal-300 dark:border-gray-600 focus:outline-none dark:bg-gray-800 dark:text-white"
-					placeholder="Type a message..."
+					placeholder={editingMessage ? "Edit message..." : replyingTo ? "Write your reply..." : "Type a message..."}
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -215,7 +344,7 @@ const Chat = ({ chat }) => {
 					className="px-4 md:px-6 py-2 bg-teal-600 dark:bg-teal-700 text-white font-semibold rounded-r-lg hover:bg-teal-500 dark:hover:bg-teal-600 transition-colors"
 					onClick={handleSend}
 				>
-					Send
+					{editingMessage ? "Update" : "Send"}
 				</button>
 			</div>
 		</div>
@@ -223,4 +352,3 @@ const Chat = ({ chat }) => {
 }
 
 export default AppLayout(Chat);
-

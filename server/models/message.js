@@ -27,6 +27,20 @@ const MessageSchema = new mongoose.Schema(
 				},
 			}
 		],
+		replyTo: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Message",
+		},
+		mentions: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "User",
+			},
+		],
+		deleted: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	{ 
 		timestamps: true
