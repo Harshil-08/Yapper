@@ -1,13 +1,80 @@
 import { Server } from "socket.io";
 import Message from "./models/message.js";
 
+/** App-wide: userId -> number of active socket connections (tabs / devices) */
+const globalPresence = new Map();
+
+function getGlobalOnlineUserIds() {
+	return [...globalPresence.keys()];
+}
+
+function addGlobalPresence(io, userId) {
+	const uid = String(userId);
+	const prev = globalPresence.get(uid) || 0;
+	globalPresence.set(uid, prev + 1);
+	if (prev === 0) {
+		io.emit("user_presence_global", { userId: uid, online: true });
+	}
+}
+
+function removeGlobalPresence(io, userId) {
+	const uid = String(userId);
+	const prev = globalPresence.get(uid) || 0;
+	const next = prev - 1;
+	if (next <= 0) {
+		globalPresence.delete(uid);
+		io.emit("user_presence_global", { userId: uid, online: false });
+	} else {
+		globalPresence.set(uid, next);
+	}
+}
+
 export const handleWebsocket = (server) => {
-	const io = new Server(server);
+	const io = new Server(server, {
+		cors: {
+			origin: true,
+			credentials: true,
+		},
+	});
 
 	io.on("connection", (socket) => {
 		console.log("User connected:", socket.id);
 
-		socket.on("join_room", async ({ chatId, page }) => {
+		socket.on("presence_identify", ({ userId }) => {
+			if (!userId) return;
+
+			const prev = socket.data.presenceUserId;
+			if (prev && String(prev) === String(userId)) {
+				socket.emit("presence_snapshot_global", {
+					onlineUserIds: getGlobalOnlineUserIds(),
+				});
+				return;
+			}
+
+			if (prev && String(prev) !== String(userId)) {
+				removeGlobalPresence(io, prev);
+			}
+
+			socket.data.presenceUserId = userId;
+			addGlobalPresence(io, userId);
+			socket.emit("presence_snapshot_global", {
+				onlineUserIds: getGlobalOnlineUserIds(),
+			});
+		});
+
+		socket.on("join_room", async ({ chatId, page, userId }) => {
+			if (!userId) {
+				console.warn("join_room missing userId");
+			}
+
+			const prevChat = socket.data.chatId;
+			if (prevChat && String(prevChat) !== String(chatId)) {
+				socket.leave(prevChat);
+			}
+
+			socket.data.chatId = chatId;
+			socket.data.userId = userId;
+
 			socket.join(chatId);
 			console.log(`User ${socket.id} joined room ${chatId}`);
 
@@ -132,7 +199,9 @@ export const handleWebsocket = (server) => {
 
 		socket.on("disconnect", () => {
 			console.log("User disconnected:", socket.id);
-			socket.broadcast.emit("user_disconnected", socket.id);
+			if (socket.data.presenceUserId) {
+				removeGlobalPresence(io, socket.data.presenceUserId);
+			}
 		});
 	});
 };

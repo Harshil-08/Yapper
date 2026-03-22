@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
-import { io } from "socket.io-client"
 import AppLayout from "../components/layout/AppLayout"
 import { useUser } from "../contexts/UserContext"
+import { useChatSocket } from "../contexts/ChatSocketContext"
 import { ChevronDown, Reply, Edit2, Trash2 } from "lucide-react"
 
 const Chat = ({ chat }) => {
@@ -14,27 +14,25 @@ const Chat = ({ chat }) => {
 	const [replyingTo, setReplyingTo] = useState(null)
 	const containerRef = useRef(null)
 	const messagesEndRef = useRef(null)
-	const socketRef = useRef(null)
 	const { user } = useUser()
+	const { socket } = useChatSocket()
 
 	useEffect(() => {
-		if (!chat) return
+		if (!chat || !socket || !user) return
 
-		socketRef.current = io("https://yapper-fm7z.onrender.com", { transports: ["websocket"] })
-		socketRef.current.emit("join_room", { chatId: chat._id, page: 1 })
-		socketRef.current.on("load_messages", ({ loadedMessages, hasMore: more }) => {
+		const onLoadMessages = ({ loadedMessages, hasMore: more }) => {
 			setMessages(loadedMessages)
 			setHasMore(more)
 			setPage(1)
 			scrollToBottom()
-		})
+		}
 
-		socketRef.current.on("receive_message", (newMessage) => {
+		const onReceiveMessage = (newMessage) => {
 			setMessages((prevMessages) => [...prevMessages, newMessage])
 			scrollToBottom()
-		})
+		}
 
-		socketRef.current.on("load_more_messages", ({ loadedMessages, hasMore: more }) => {
+		const onLoadMoreMessages = ({ loadedMessages, hasMore: more }) => {
 			if (containerRef.current) {
 				const container = containerRef.current
 				const oldScrollHeight = container.scrollHeight
@@ -44,46 +42,54 @@ const Chat = ({ chat }) => {
 					container.scrollTop = container.scrollHeight - oldScrollHeight
 				}, 100)
 			}
-		})
+		}
 
-		socketRef.current.on("message_deleted", ({ messageId }) => {
+		const onMessageDeleted = ({ messageId }) => {
 			setMessages((prevMessages) => 
 				prevMessages.filter(msg => msg._id !== messageId)
 			)
-		})
+		}
 
-		socketRef.current.on("message_edited", ({ messageId, content }) => {
+		const onMessageEdited = ({ messageId, content }) => {
 			setMessages((prevMessages) => 
 				prevMessages.map(msg => 
 					msg._id === messageId ? { ...msg, content } : msg
 				)
 			)
-		})
+		}
+
+		socket.on("load_messages", onLoadMessages)
+		socket.on("receive_message", onReceiveMessage)
+		socket.on("load_more_messages", onLoadMoreMessages)
+		socket.on("message_deleted", onMessageDeleted)
+		socket.on("message_edited", onMessageEdited)
+
+		socket.emit("join_room", { chatId: chat._id, page: 1, userId: user._id })
 
 		return () => {
-			socketRef.current.off("load_messages")
-			socketRef.current.off("receive_message")
-			socketRef.current.off("load_more_messages")
-			socketRef.current.off("message_deleted")
-			socketRef.current.off("message_edited")
+			socket.off("load_messages", onLoadMessages)
+			socket.off("receive_message", onReceiveMessage)
+			socket.off("load_more_messages", onLoadMoreMessages)
+			socket.off("message_deleted", onMessageDeleted)
+			socket.off("message_edited", onMessageEdited)
 		}
-	}, [chat])
+	}, [chat, socket, user])
 
 	useEffect(() => {
 		const container = containerRef.current
 		if (!container) return
 
 		const handleScroll = () => {
-			if (container.scrollTop === 0 && hasMore) {
+			if (container.scrollTop === 0 && hasMore && socket) {
 				const nextPage = page + 1
-				socketRef.current.emit("load_more", { chatId: chat._id, page: nextPage })
+				socket.emit("load_more", { chatId: chat._id, page: nextPage })
 				setPage(nextPage)
 			}
 		}
 
 		container.addEventListener("scroll", handleScroll)
 		return () => container.removeEventListener("scroll", handleScroll)
-	}, [page, hasMore, chat])
+	}, [page, hasMore, chat, socket])
 
 	useEffect(() => {
 		const handleClickOutside = (event) => {
@@ -103,7 +109,7 @@ const Chat = ({ chat }) => {
 	}
 
 	const handleSend = () => {
-		if (message.trim() && chat && user) {
+		if (message.trim() && chat && user && socket) {
 			if (editingMessage) {
 				handleEditMessage()
 				return
@@ -116,7 +122,7 @@ const Chat = ({ chat }) => {
 			}
 
 			if (replyingTo) {
-				socketRef.current.emit("reply_message", {
+				socket.emit("reply_message", {
 					sender: user._id,
 					content: message,
 					chat: chat._id,
@@ -125,14 +131,15 @@ const Chat = ({ chat }) => {
 				setMessage("");
 				setReplyingTo(null);
 			} else {
-				socketRef.current.emit("send_message", newMessage)
+				socket.emit("send_message", newMessage)
 				setMessage("")
 			}
 		}
 	}
 
 	const handleEditMessage = () => {
-		socketRef.current.emit("edit_message", {
+		if (!socket) return
+		socket.emit("edit_message", {
 			messageId: editingMessage._id,
 			content: message,
 			chatId: chat._id
@@ -142,7 +149,8 @@ const Chat = ({ chat }) => {
 	};
 
 	const handleDeleteMessage = (messageId) => {
-		socketRef.current.emit("delete_message", { 
+		if (!socket) return
+		socket.emit("delete_message", { 
 			messageId,
 			chatId: chat._id
 		});

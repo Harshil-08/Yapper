@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ChatProvider } from './contexts/ChatContext';
+import { ChatSocketProvider } from './contexts/ChatSocketContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { UserProvider } from './contexts/UserContext';
 import LoadingSpinner from './pages/LoadinSpinner';
@@ -18,21 +19,23 @@ const App = () => {
 		<BrowserRouter>
 			<UserProvider>
 				<ChatProvider>
-					<ThemeProvider>
-						<Suspense fallback={<LoadingSpinner />}>
-							<Routes>
-								<Route path="/" element={<Landing />} />
-								<Route path="/login" element={<Login />} />
-								<Route path="/signup" element={<Signup />} />
-								<Route path="*" element={<NotFound />} />
+					<ChatSocketProvider>
+						<ThemeProvider>
+							<Suspense fallback={<LoadingSpinner />}>
+								<Routes>
+									<Route path="/" element={<Landing />} />
+									<Route path="/login" element={<Login />} />
+									<Route path="/signup" element={<Signup />} />
+									<Route path="*" element={<NotFound />} />
 
-								<Route element={<ProtectedRoute />}>
-									<Route path="/home" element={<Home />} />
-									<Route path="/chat/:group_name" element={<Chat />} />
-								</Route>	
-							</Routes>
-						</Suspense>
-					</ThemeProvider>
+									<Route element={<ProtectedRoute />}>
+										<Route path="/home" element={<Home />} />
+										<Route path="/chat/:group_name" element={<Chat />} />
+									</Route>
+								</Routes>
+							</Suspense>
+						</ThemeProvider>
+					</ChatSocketProvider>
 				</ChatProvider>
 			</UserProvider>
 		</BrowserRouter>
